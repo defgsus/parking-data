@@ -1,3 +1,6 @@
 env/
 .idea/
 update-repo.sh
+
+*.py[cod]
+__pycache__
