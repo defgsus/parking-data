@@ -1,9 +1,10 @@
 import argparse
 import re
 import os
+import sys
 import datetime
 import csv
-from io import StringIO
+import json
 
 
 def parse_args():
@@ -19,7 +20,10 @@ def parse_args():
     )
     parser.add_argument(
         "-f", "--format", type=str, default="csv",
-        help="csv",
+        help="""
+        csv: export regular excel-style CSV table
+        elasticsearch: export directly into ElasticSearch API
+        """,
     )
     parser.add_argument(
         "-o", "--output", type=str, default="-",
@@ -50,6 +54,10 @@ def export_rows(place_ids, rows, format, fp):
         writer = csv.DictWriter(fp, ["timestamp"] + sorted(place_ids))
         writer.writeheader()
         writer.writerows(rows)
+
+    elif format == "elasticsearch":
+        from elastic.elastic import export_elastic
+        export_elastic(load_meta(), place_ids, rows)
 
     else:
         print(f"Unsupported format '{format}'")
@@ -84,13 +92,19 @@ def export(date_filter, place_filter, output_filename, format, csv_path="./csv")
                         all_places.add(key)
 
     if output_filename == "-":
-        fp = StringIO()
-        export_rows(all_places, all_rows, format, fp)
-        fp.seek(0)
-        print(fp.read())
+        export_rows(all_places, all_rows, format, sys.stdout)
     else:
         with open(output_filename, "wt") as fp:
             export_rows(all_places, all_rows, format, fp)
+
+
+def load_meta():
+    place_map = dict()
+    with open("./meta-data.csv") as fp:
+        reader = csv.DictReader(fp)
+        for row in reader:
+            place_map[row["place_id"]] = row
+    return place_map
 
 
 if __name__ == "__main__":

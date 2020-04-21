@@ -4,7 +4,10 @@ This repository contains the export of [parking-scraper](https://github.com/defg
 
 Data gathering has started 2020/03/24 and this repository is updated daily.
 
-Each day is exported in a single file in the `./csv` directory.
+Each day is stored in a single file in the `./csv` directory.
+
+
+### general export
 
 You can use `export.py` with *Python 3+* to bundle them into a single file.
 
@@ -29,18 +32,50 @@ python export.py -p muenster ulm
 Generally **-d** and **--p** options accept multiple regular expressions separated by space which are *OR*-combined.
 
 
+### export to ElasticSearch
+
+Install the `elasticsearch` python library
+
+```shell script
+# to install newest lib
+pip install -r elastic/requirements.txt
+
+# or state version of your elastic server (e.g. latest v7)
+pip install 'elasticsearch<8.0.0'
+```
+
+Then use 
+```shell script
+python export.py -f elasticsearch
+```
+to commit each data point to the elastic search API. 
+
+The configuration for the server host, index name and so on are currently hardwired in `./elastic/elastic.py`.
+
+The export will probably take a couple of hours but you can 
+[create an index in Kibana](https://www.elastic.co/guide/en/kibana/current/tutorial-define-index.html) once
+the export has started. Do not forget to use the `timestamp` field as timestamp index.
+
+The file `./elastic/dashboard.ndjson` contains a simple dashboard and some widgets to get started. 
+Import this into Kibana in the management/saved objects pane 
+or via [REST API](https://www.elastic.co/guide/en/kibana/master/saved-objects-api-import.html).
+
+**Note**: Currently each elasticsearch export will re-create all data-points. So be careful to not run the
+script twice for the same date range. 
+
+
 ### data structure
 
 Each line in the CSV files contains a timestamp of the recording as *Universal Time Code* followed by the free parking
 spaces of each parking place/lot. An empty column means either that there was no change in data since the last timestamp
 or there was no recording because the website or the scraper went down.
 
-Most of 2020/03/28 is missing. 
+For example, most of 2020/03/28 and 29 is missing. 
 
 Free places are generally recorded every 15 minutes 
 and every 5 minutes during the period of 6:00 to 20:00 (Europe/Berlin)
 
-The header of each column contains the **place_id** which is just some unique abstraction to identify the parking lot.
+The header of each column contains the **place_id** which is just some unique ID to identify the parking lot.
 
 
 ### meta data structure
@@ -63,4 +98,4 @@ and might contain if known:
 
 ### License
 
-I do not really know. I'd argue it's free to use by everyone for everything..
+I do not really know. I'd argue it's free to use by everyone for everything ... *reasonable*
