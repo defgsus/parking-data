@@ -6,6 +6,8 @@ import datetime
 import csv
 import json
 
+import tqdm
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -21,13 +23,17 @@ def parse_args():
     parser.add_argument(
         "-f", "--format", type=str, default="csv",
         help="""
-        csv: export regular excel-style CSV table
+        csv: export regular excel-style CSV table (default)
         elasticsearch: export directly into ElasticSearch API
         """,
     )
     parser.add_argument(
         "-o", "--output", type=str, default="-",
         help="Export filename or - for stdout",
+    )
+    parser.add_argument(
+        "--clear-index", type=bool, nargs="?", default=False, const=True,
+        help="Clear elasticsearch index before exporting",
     )
 
     return parser.parse_args()
@@ -49,7 +55,7 @@ class RegexFilter:
         return False
 
 
-def export_rows(place_ids, rows, format, fp):
+def export_rows(place_ids, rows, format, fp, clear_index):
     if format == "csv":
         writer = csv.DictWriter(fp, ["timestamp"] + sorted(place_ids))
         writer.writeheader()
@@ -57,13 +63,13 @@ def export_rows(place_ids, rows, format, fp):
 
     elif format == "elasticsearch":
         from elastic.elastic import export_elastic
-        export_elastic(load_meta(), place_ids, rows)
+        export_elastic(load_meta(), place_ids, rows, clear_index=clear_index)
 
     else:
         print(f"Unsupported format '{format}'")
 
 
-def export(date_filter, place_filter, output_filename, format, csv_path="./csv"):
+def export(date_filter, place_filter, output_filename, format, csv_path="./csv", clear_index=False):
     filenames = []
     for root, dirs, files in os.walk(csv_path):
         for fn in files:
@@ -77,7 +83,7 @@ def export(date_filter, place_filter, output_filename, format, csv_path="./csv")
 
     all_rows = []
     all_places = set()
-    for fn in sorted(filenames):
+    for fn in tqdm.tqdm(sorted(filenames), desc="loading files"):
         with open(fn, "r") as fp:
             reader = csv.DictReader(fp)
             for row in reader:
@@ -92,10 +98,10 @@ def export(date_filter, place_filter, output_filename, format, csv_path="./csv")
                         all_places.add(key)
 
     if output_filename == "-":
-        export_rows(all_places, all_rows, format, sys.stdout)
+        export_rows(all_places, all_rows, format, sys.stdout, clear_index)
     else:
         with open(output_filename, "wt") as fp:
-            export_rows(all_places, all_rows, format, fp)
+            export_rows(all_places, all_rows, format, fp, clear_index)
 
 
 def load_meta():
@@ -121,4 +127,7 @@ if __name__ == "__main__":
     else:
         place_filter = RegexFilter(r".*")
 
-    export(date_filter, place_filter, args.output, args.format)
+    export(
+        date_filter, place_filter, args.output, args.format,
+        clear_index=args.clear_index
+   )
