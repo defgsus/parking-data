@@ -9,12 +9,15 @@ class ParkingExporter(Exporter):
     MAPPINGS = {
         "properties": {
             "timestamp": {"type": "date"},
+            "timestamp_hour": {"type": "float"},
+            "timestamp_weekday": {"type": "keyword"},
             "place_id": {"type": "keyword"},
             "num_free": {"type": "integer"},
             "num_all": {"type": "integer"},
             "percent_free": {"type": "float"},
             "city_name": {"type": "keyword"},
             "place_name": {"type": "keyword"},
+            "full_name": {"type": "keyword"},
             "location": {"type": "geo_point"},
         }
     }
@@ -48,12 +51,18 @@ def export_elastic(meta_data, place_ids, rows, bulk_size=500, clear_index=False)
 
                     document = {
                         "timestamp": timestamp,
+                        "timestamp_hour": timestamp.hour + timestamp.minute / 60.,
+                        "timestamp_weekday": timestamp.strftime("%w %A"),
                         "place_id": place_id,
                         "num_free": num_free,
                         "num_all": num_all,
                         "percent_free": percent_free,
                         "city_name": place_data.get("city_name"),
                         "place_name": place_data.get("place_name"),
+                        "full_name": "%s / %s" % (
+                            place_data.get("city_name") or place_id,
+                            place_data.get("place_name") or "-",
+                        )
                     }
                     if place_data.get("latitude") and place_data.get("longitude"):
                         document["location"] = {

@@ -7,10 +7,10 @@ Data gathering has started 2020/03/24 and this repository is updated daily.
 
 Each day is stored in a single file in the `./csv` directory with the following layout:
 ```
-timestamp                 | place_id1 | place_id2
-2020-03-24T16:00:04+00:00 | 100       | 2
-2020-03-24T16:01:02+00:00 | 99        | 
-2020-03-24T16:02:03+00:00 |           | 3
+timestamp                 | place_id1 | place_id2 | ...
+2020-03-24T16:00:04+00:00 | 100       | 2         |
+2020-03-24T16:01:02+00:00 | 99        |           |
+2020-03-24T16:02:03+00:00 |           | 3         |
 ```
 
 ### export
@@ -42,7 +42,7 @@ Generally **-d** and **--p** options accept multiple regular expressions separat
 by space which are *OR*-combined.
 
 
-### export to ElasticSearch
+### export to elasticsearch
 
 ```shell script
 # install elasticsearch requirements
@@ -53,18 +53,12 @@ Then use
 ```shell script
 python export.py -f elasticsearch
 ```
-to commit each data point to the elastic search API. 
+to commit each data point to the elasticsearch API. 
 
-The configuration for the server host, index name and so on are currently hardwired to 
-default **localhost:9200**.
+The configuration for the server host is currently hardwired to 
+default **localhost:9200**. The index name is **parking-data**.
 
-The export will probably take a couple of hours but you can 
-[create an index in Kibana](https://www.elastic.co/guide/en/kibana/current/tutorial-define-index.html) once
-the export has started. Do not forget to use the `timestamp` field as timestamp index.
-
-The file `./elastic/dashboard.ndjson` contains a simple dashboard and some widgets to get started. 
-Import this into Kibana in the management/saved objects pane 
-or via [REST API](https://www.elastic.co/guide/en/kibana/master/saved-objects-api-import.html).
+Check the [elastic/elastic.py](elastic/elastic.py) file to see the data structure.
 
 
 ### data structure
@@ -100,6 +94,8 @@ and might contain if known:
 - **address**: multiline string with address
 - **latitude** and **longitude**: geo coordinates
 - **place_url**: website for the parking place
+
+Although it must be admitted that the meta data is not maintained with great care. 
 
 
 ### License

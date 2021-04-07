@@ -1,1 +1,1 @@
-https://github.com/defgsus/elastipy/archive/development.zip
+elastipy==0.2.1
