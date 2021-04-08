@@ -3,6 +3,9 @@
 This repository contains the export of 
 [parking-scraper](https://github.com/defgsus/parking-scraper) as CSV files.
 
+There is a [small article](https://defgsus.github.io/blog/2021/04/08/one-year-parking.html)
+written after one year of scraping.
+
 Data gathering has started 2020/03/24 and this repository is updated daily.
 
 Each day is stored in a single file in the `./csv` directory with the following layout:
